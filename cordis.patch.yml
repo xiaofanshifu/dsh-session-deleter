@@ -1,0 +1,5 @@
+# dsh-session-deleter bundle patch — 在 profile 根挂载「会话删除」主机插件。
+# 行 id 必须与主机模块导出的 `name`（src/host.js: export const name）一致。
+- insert:
+    - id: session-deleter
+      name: 'dsh-session-deleter'
