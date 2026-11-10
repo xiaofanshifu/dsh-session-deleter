@@ -1,7 +1,16 @@
 {
   "name": "dsh-session-deleter",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "DeepSeek Harness 会话彻底删除插件：在会话右键菜单提供「删除会话」，永久清除物理日志、投影缓存行与工作区注册表引用（内置只有归档，无删除）。",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaofanshifu/dsh-session-deleter.git"
+  },
+  "homepage": "https://github.com/xiaofanshifu/dsh-session-deleter#readme",
+  "bugs": {
+    "url": "https://github.com/xiaofanshifu/dsh-session-deleter/issues"
+  },
+  "author": "xiaofanshifu",
   "type": "module",
   "main": "src/host.js",
   "exports": {

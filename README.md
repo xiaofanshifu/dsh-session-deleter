@@ -50,8 +50,45 @@ DeepSeek Harness（DSH）的**会话彻底删除**插件。Harness 内置的会�
 
 ## 二、安装
 
-**用 tarball 安装（实体拷贝，推荐）**：pnpm 把包文件真实拷进 profile，
-装完后与源文件/源目录再无关联，源码可以随意移动、删除。
+### 方式 A：git 在线安装（推荐）
+
+仓库地址：https://github.com/xiaofanshifu/dsh-session-deleter
+
+在 DSH 会话里让 agent 执行（`plugin_manager` 工具），**target 指向 git 仓库**：
+
+```
+plugin_manager.install_bundle target=github:xiaofanshifu/dsh-session-deleter
+```
+
+它会：
+1. 在 `~\.dsh\profiles\desktop` 下用 pnpm 拉取仓库默认分支 HEAD，并把
+   **commit 锁定**进 `pnpm-lock.yaml`（可复现；不依赖任何本地文件，装完源码
+   可以随意移动、删除）；
+2. 把 `"dsh-session-deleter"` 写进 `~\.dsh\profiles\desktop\package.json`
+   的 `dsh.profile.bundles`；
+3. 触发宿主 HMR 热回放（返回 `application: "applied"` 即已生效）。
+
+安装/热回放后 Web GUI 按 F5；若菜单未出现再重启一次 DSH。
+
+**网络前提**：本机可经 HTTPS（443）访问 github.com。直连不可达、有本地 HTTP
+代理（如 `127.0.0.1:7890`）时，安装前给 git 临时配置、**装完务必还原**：
+
+```powershell
+git config --global https.proxy http://127.0.0.1:7890
+# ……安装完成后……
+git config --global --unset https.proxy
+```
+
+**更新**：lockfile 锁定 commit，GitHub 推送新代码不会自动更新本机。需要更新时
+先 `plugin_manager.remove_bundle target=dsh-session-deleter` 再重新 `install_bundle`；
+仓库打过版本 tag 后锁定 tag 更稳：`github:xiaofanshifu/dsh-session-deleter#v0.4.0`
+（只装 tag 指向的版本，避免 main 分支中间状态）。
+
+### 方式 B：tarball 安装（离线备选）
+
+适用于网络无法访问 GitHub 的场景。pnpm 以 `file:` 方式把包文件真实拷进 profile，
+依赖记录会**永久指向 tgz 路径**——tgz 文件必须放在**长期保留的路径**（如
+`~\.dsh\plugins\`），删除它会导致 profile 后续 pnpm 操作因引用悬空而失败。
 
 先打 tarball（二选一）：
 ```powershell
@@ -60,29 +97,20 @@ npm pack            # 生成 dsh-session-deleter-0.x.x.tgz
 # 或直接把现成的 zip 换成 tgz：
 tar -czf dsh-session-deleter-0.3.1.tgz --transform 's,^dsh-session-deleter,package,' dsh-session-deleter
 ```
-把 `.tgz` 放到一个**长期保留的路径**（如 `~\.dsh\plugins\`）。
 
-### 方式 A：DSH 插件管理器（推荐）
-
-在 DSH 会话里让 agent 执行（`plugin_manager` 工具），**target 指向 .tgz 文件**：
+把 `.tgz` 放到长期保留路径后，让 agent 执行（`plugin_manager` 工具），
+**target 指向 .tgz 文件**：
 
 ```
 plugin_manager.install_bundle target=C:\Users\<你>\.dsh\plugins\dsh-session-deleter-0.3.1.tgz
 ```
-
-它会：
-1. 在 `~\.dsh\profiles\desktop` 下用 pnpm 以 `file:` 方式把包**实体拷贝**进
-   `node_modules/.pnpm`（需要本机已装 Node.js 18+ 与 pnpm）；
-2. 把 `"dsh-session-deleter"` 写进 `~\.dsh\profiles\desktop\package.json`
-   的 `dsh.profile.bundles`；
-3. 触发宿主 HMR 热回放（返回 `application: "applied"` 即已生效）。
 
 > ⚠️ 若 target 直接给**源码目录**，插件管理器会用 `link:` 软链安装——
 > 此后源码目录被移动/删除，插件立即失效。请务必用 .tgz。
 
 安装/热回放后**重启一次 DSH**（或等 HMR 回放完成），Web GUI 按 F5。
 
-### 方式 B：手动安装（无 agent 时）
+### 方式 C：手动安装（无 agent 时）
 
 在 `~\.dsh\profiles\desktop` 下依次执行：
 
@@ -175,5 +203,3 @@ pnpm remove dsh-session-deleter
 - `package.json`：`dsh.bundle.patch` → `cordis.patch.yml`（insert 一行
   `id: session-deleter, name: dsh-session-deleter`，id 须等于 host 的 `export const name`）；
   `dsh.client` 声明浏览器半（`platform: web, immediately: true`）。
-- 测试：与本包同级的 `test-sandbox/` 目录下——`v2-test.cjs`（宿主四用例）、
-  `client-test.cjs`（客户端红线五用例）、`e2e.cjs`（真实数据端到端：植入一次性会话再删）。
